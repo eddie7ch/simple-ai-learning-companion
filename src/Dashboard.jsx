@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getFeedback, getRecommendation } from './api.js'
-import { learner, skillLevel } from './mockData.js'
-import { listTopics, getTrack, setTrack, addTopicFeedback } from './learningStore.js'
+import { DEFAULT_LEARNER_NAME, skillLevel } from './mockData.js'
+import {
+  listTopics,
+  getTrack,
+  setTrack,
+  addTopicFeedback,
+  getLearnerName,
+  setLearnerName,
+} from './learningStore.js'
 import './Dashboard.css'
 
 function resolveInitialTrack(topicNames) {
@@ -14,6 +21,10 @@ export default function Dashboard() {
   const [topics, setTopics] = useState(() => listTopics())
   const topicNames = useMemo(() => topics.map((t) => t.name), [topics])
   const [track, setTrackState] = useState(() => resolveInitialTrack(topicNames))
+
+  const [learnerName, setLearnerNameState] = useState(() => getLearnerName() ?? DEFAULT_LEARNER_NAME)
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [nameDraft, setNameDraft] = useState(learnerName)
 
   const [submission, setSubmission] = useState('')
   const [isEvaluating, setIsEvaluating] = useState(false)
@@ -29,6 +40,19 @@ export default function Dashboard() {
 
   function refreshTopics() {
     setTopics(listTopics())
+  }
+
+  function startEditingName() {
+    setNameDraft(learnerName)
+    setIsEditingName(true)
+  }
+
+  function saveName() {
+    const trimmed = nameDraft.trim()
+    const finalName = trimmed || DEFAULT_LEARNER_NAME
+    setLearnerNameState(finalName)
+    setLearnerName(finalName)
+    setIsEditingName(false)
   }
 
   function handleTrackChange(e) {
@@ -104,7 +128,27 @@ export default function Dashboard() {
     <div className="dashboard">
       <section className="progress-card">
         <div>
-          <h2>{learner.name}</h2>
+          {isEditingName ? (
+            <input
+              type="text"
+              className="name-edit-input"
+              value={nameDraft}
+              autoFocus
+              maxLength={40}
+              onFocus={(e) => e.target.select()}
+              onChange={(e) => setNameDraft(e.target.value)}
+              onBlur={saveName}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') saveName()
+                if (e.key === 'Escape') setIsEditingName(false)
+              }}
+            />
+          ) : (
+            <h2 className="editable-name" onClick={startEditingName} title="Click to rename">
+              {learnerName}
+              <span className="edit-icon">✎</span>
+            </h2>
+          )}
           <select className="track-select" value={track ?? ''} onChange={handleTrackChange}>
             {topicNames.map((t) => (
               <option key={t} value={t}>

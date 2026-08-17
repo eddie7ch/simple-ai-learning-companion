@@ -21,6 +21,16 @@ export function getLearningState() {
   return read()
 }
 
+export function getLearnerName() {
+  return read().learnerName ?? null
+}
+
+export function setLearnerName(name) {
+  const state = read()
+  state.learnerName = name
+  write(state)
+}
+
 export function getTrack() {
   return read().track ?? null
 }

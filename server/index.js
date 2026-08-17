@@ -5,8 +5,10 @@ import express from 'express'
 import cors from 'cors'
 import 'dotenv/config'
 
-// Render (and most hosts) set PORT; BACKEND_PORT is the local-dev override.
-const PORT = process.env.PORT || process.env.BACKEND_PORT || 8787
+// BACKEND_PORT (local .env) wins if set, so it can't collide with a PORT
+// value the dev environment injects for the frontend. Render and most hosts
+// only set PORT, so that's still the fallback for production.
+const PORT = process.env.BACKEND_PORT || process.env.PORT || 8787
 const API_KEY = process.env.GROQ_API_KEY
 const MODEL = 'openai/gpt-oss-120b'
 const API_URL = 'https://api.groq.com/openai/v1/chat/completions'

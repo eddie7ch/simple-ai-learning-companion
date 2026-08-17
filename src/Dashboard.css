@@ -22,6 +22,38 @@
   font-size: 20px;
 }
 
+.editable-name {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 6px;
+  padding: 2px 4px;
+  margin: -2px -4px;
+}
+
+.editable-name:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.editable-name .edit-icon {
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+.name-edit-input {
+  font-size: 20px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #1a1a1a;
+  background: white;
+  border: none;
+  border-radius: 6px;
+  padding: 3px 8px;
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  max-width: 240px;
+}
+
 .track-select {
   margin: 6px 0 0;
   font-size: 13px;
