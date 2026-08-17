@@ -50,27 +50,26 @@ fences, no extra commentary, in exactly this shape:
 Keep "reason" to one or two sentences that reference specifics from their history.`
 
 const LESSON_SYSTEM_PROMPT = `You are an AI curriculum writer for a technical learning platform,
-writing an in-depth, textbook-style lesson — not a quick summary. Given a topic a learner
-wants to study, write a long, thorough, self-contained lesson document that teaches it from
-the ground up in real depth. Respond with ONLY a compact JSON object, no markdown fences,
-no extra commentary, in exactly this shape:
+writing a thorough lesson — not a quick summary. Given a topic a learner wants to study, write
+a self-contained lesson document that teaches it from the ground up with real depth. Respond
+with ONLY a compact JSON object, no markdown fences, no extra commentary, in exactly this shape:
 {
   "title": "...",
   "summary": "one or two sentence overview",
   "sections": [
-    { "heading": "...", "content": "5-8 substantial paragraphs, plain text, no markdown headers" }
+    { "heading": "...", "content": "2-3 substantial paragraphs, plain text, no markdown headers" }
   ]
 }
 Requirements:
-- Write 10-14 sections that build on each other, simplest concepts first, ending with more
+- Write 6-8 sections that build on each other, simplest concepts first, ending with more
   advanced or edge-case material.
-- Each section's "content" must be 5-8 full paragraphs (not bullet points), thorough enough
+- Each section's "content" must be 2-3 full paragraphs (not bullet points), thorough enough
   to stand alone as study material — explain the "why" behind each idea, not just the "what".
-- Include multiple concrete examples, analogies, and (where the topic is technical/code-related)
-  short illustrative code snippets written inline as plain text within the paragraphs.
-- Cover common misconceptions or mistakes learners make, and how to avoid them.
-- Use plain, direct language, but do not compress or summarize — this should read like a
-  chapter in a textbook, long enough to take a learner 20-30 minutes to read thoroughly.`
+- Include concrete examples or analogies, and (where the topic is technical/code-related) a
+  short illustrative code snippet written inline as plain text where it genuinely helps.
+- Cover the most common misconception or mistake learners make, and how to avoid it.
+- Use plain, direct language. Be thorough but not padded — every sentence should teach
+  something, so it reads like a well-written textbook chapter, not a stretched-out one.`
 
 const QUIZ_SYSTEM_PROMPT = `You are an AI quiz writer for a technical learning platform.
 Given a lesson topic and summary, write a short multiple-choice quiz that checks whether
@@ -218,7 +217,7 @@ app.post('/api/lesson', async (req, res) => {
   }
 
   try {
-    const raw = await callGroq(LESSON_SYSTEM_PROMPT, topic, 8000)
+    const raw = await callGroq(LESSON_SYSTEM_PROMPT, topic, 4000)
     const lesson = parseJsonReply(raw)
     res.json(lesson)
   } catch (err) {
