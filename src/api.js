@@ -1,53 +1,82 @@
-// Simple client for the Anthropic Messages API.
-// Reads the API key from a Vite env var (see .env.example).
+// Client for the app's own backend proxy (see server/index.js), which
+// holds the Groq API key server-side.
 
-const API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY
-const API_URL = 'https://api.anthropic.com/v1/messages'
-const MODEL = 'claude-sonnet-4-5'
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8787'
 
-const SYSTEM_PROMPT = `You are a friendly, encouraging AI learning companion and tutor.
-Your job is to help the user understand topics, not just give them answers.
-- Explain concepts clearly and step by step.
-- Use simple examples and analogies where helpful.
-- Ask a short follow-up question when it helps check understanding.
-- Keep answers focused and not overly long unless the user asks for depth.
-- If the user seems stuck, break the problem into smaller pieces.`
-
-/**
- * Sends the full conversation to Claude and returns the assistant's reply text.
- * @param {Array<{role: 'user'|'assistant', content: string}>} messages
- */
-export async function sendMessage(messages) {
-  if (!API_KEY) {
-    throw new Error(
-      'Missing API key. Copy .env.example to .env and set VITE_ANTHROPIC_API_KEY.'
-    )
-  }
-
-  const response = await fetch(API_URL, {
+async function postJson(path, body) {
+  const response = await fetch(`${API_URL}${path}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
-      'anthropic-version': '2023-06-01',
-      // Required to call the Anthropic API directly from a browser.
-      // See the note in .env.example about the security tradeoffs.
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: 1024,
-      system: SYSTEM_PROMPT,
-      messages: messages.map((m) => ({ role: m.role, content: m.content })),
-    }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   })
 
+  const data = await response.json()
+
   if (!response.ok) {
-    const errorBody = await response.text()
-    throw new Error(`API error ${response.status}: ${errorBody}`)
+    throw new Error(data.error || `API error ${response.status}`)
   }
 
-  const data = await response.json()
-  const textBlock = data.content?.find((block) => block.type === 'text')
-  return textBlock ? textBlock.text : ''
+  return data
+}
+
+/**
+ * Sends the full conversation to the tutor model and returns the assistant's reply text.
+ * @param {Array<{role: 'user'|'assistant', content: string}>} messages
+ * @param {{ socratic?: boolean }} [options]
+ */
+export async function sendMessage(messages, options = {}) {
+  const data = await postJson('/api/chat', {
+    messages: messages.map((m) => ({ role: m.role, content: m.content })),
+    mode: options.socratic ? 'socratic' : 'direct',
+  })
+  return data.reply
+}
+
+/**
+ * Evaluates a learner's work submission and returns AI-generated feedback.
+ * @param {string} submission
+ * @returns {Promise<{score: number, strengths: string[], suggestions: string[]}>}
+ */
+export async function getFeedback(submission) {
+  return postJson('/api/feedback', { submission })
+}
+
+/**
+ * Recommends the learner's next activity based on their history.
+ * @param {Array<object>} activities
+ * @returns {Promise<{nextActivity: string, reason: string}>}
+ */
+export async function getRecommendation(activities) {
+  return postJson('/api/recommend', { activities })
+}
+
+/**
+ * Generates a lesson document for a topic.
+ * @param {string} topic
+ * @returns {Promise<{title: string, summary: string, sections: Array<{heading: string, content: string}>}>}
+ */
+export async function getLesson(topic) {
+  return postJson('/api/lesson', { topic })
+}
+
+/**
+ * Generates a short multiple-choice quiz for a topic.
+ * @param {string} topic
+ * @param {string} summary
+ * @returns {Promise<{questions: Array<{question: string, options: string[], correctIndex: number, explanation: string}>}>}
+ */
+export async function getQuiz(topic, summary) {
+  return postJson('/api/quiz', { topic, summary })
+}
+
+/**
+ * Answers a quick spoken question asked while a lesson is being read aloud.
+ * @param {string} topic
+ * @param {string} summary
+ * @param {string} question
+ * @returns {Promise<string>}
+ */
+export async function getAskAnswer(topic, summary, question) {
+  const data = await postJson('/api/ask', { topic, summary, question })
+  return data.answer
 }

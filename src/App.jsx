@@ -1,80 +1,36 @@
-import { useEffect, useRef, useState } from 'react'
-import { sendMessage } from './api.js'
+import { useState } from 'react'
+import Chat from './Chat.jsx'
+import Dashboard from './Dashboard.jsx'
+import Learn from './Learn.jsx'
 import './App.css'
 
-const WELCOME_MESSAGE = {
-  role: 'assistant',
-  content:
-    "Hi! I'm your AI learning companion. Ask me about anything you're studying — a concept, a homework problem, or something you just read — and I'll help you work through it.",
-}
-
 export default function App() {
-  const [messages, setMessages] = useState([WELCOME_MESSAGE])
-  const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const messagesEndRef = useRef(null)
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, isLoading])
-
-  async function handleSend(e) {
-    e.preventDefault()
-    const text = input.trim()
-    if (!text || isLoading) return
-
-    const nextMessages = [...messages, { role: 'user', content: text }]
-    setMessages(nextMessages)
-    setInput('')
-    setError(null)
-    setIsLoading(true)
-
-    try {
-      const reply = await sendMessage(nextMessages)
-      setMessages([...nextMessages, { role: 'assistant', content: reply }])
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const [tab, setTab] = useState('dashboard')
 
   return (
     <div className="app">
       <header className="app-header">
         <h1>AI Learning Companion</h1>
         <p>Your friendly study partner</p>
+        <nav className="tab-nav">
+          <button
+            className={tab === 'dashboard' ? 'active' : ''}
+            onClick={() => setTab('dashboard')}
+          >
+            Dashboard
+          </button>
+          <button className={tab === 'learn' ? 'active' : ''} onClick={() => setTab('learn')}>
+            Learn
+          </button>
+          <button className={tab === 'chat' ? 'active' : ''} onClick={() => setTab('chat')}>
+            AI Tutor Chat
+          </button>
+        </nav>
       </header>
 
-      <main className="chat-window">
-        {messages.map((msg, i) => (
-          <div key={i} className={`message ${msg.role}`}>
-            <div className="message-bubble">{msg.content}</div>
-          </div>
-        ))}
-        {isLoading && (
-          <div className="message assistant">
-            <div className="message-bubble typing">Thinking…</div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </main>
-
-      {error && <div className="error-banner">{error}</div>}
-
-      <form className="composer" onSubmit={handleSend}>
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask a question about what you're learning…"
-          disabled={isLoading}
-        />
-        <button type="submit" disabled={isLoading || !input.trim()}>
-          Send
-        </button>
-      </form>
+      {tab === 'dashboard' && <Dashboard />}
+      {tab === 'learn' && <Learn />}
+      {tab === 'chat' && <Chat />}
     </div>
   )
 }
